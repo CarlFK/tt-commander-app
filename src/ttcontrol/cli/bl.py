@@ -1,4 +1,3 @@
-
 # bl.py - Boot Linux from tt-06
 
 import argparse
@@ -9,6 +8,9 @@ from time import sleep
 
 
 class uPy_com:
+    """
+    TT-MicroPython commander
+    """
 
     def __init__(self, serial_port, throttle, debug):
         self.debug = debug
@@ -24,18 +26,18 @@ class uPy_com:
         print(rx)
         sleep(self.throttle)
 
+    def send_file(self, file_name):
+        ttCpy = open(file_name).read()
+        self.write(ttCpy.encode())
+
     def sendCommand(self, command):
         self.write(str(command).encode() + b"\x04")
-
-    def send_file(self, file_name):
-        self.write(b"\x01")
-        ttCpy = open(file_name).read()
-        self.write(ttCpy.encode() + b"\x04")
 
     def syncState(self):
         self.sendCommand("dump_state()")
 
     def btn_reset(self):
+        self.write(b"\x03")
         self.sendCommand("pin = machine.Pin(1, machine.Pin.OUT)")
         self.sendCommand("pin.value(0)")
         self.sendCommand("pin.value(1)")
@@ -61,10 +63,10 @@ class uPy_com:
         self.write(b"\x04")
 
         self.write(b"\x01")
-        ttCpy = open("../ttcontrol.py").read()
-        self.write(ttCpy.encode() + b"\x04")
-        # self.send_file('../ttcontrol.py')
+        self.send_file("../ttcontrol.py")
+        self.write(b"\x04")
         sleep(8)
+
         self.sendCommand("read_rom()")
         self.syncState()
 
@@ -95,23 +97,28 @@ def main():
 
     args = get_args()
 
+    # open serial connection from host to RP2040
     upc = uPy_com(args.serial_port, args.throttle, args.debug)
 
+    # Init the TT board
     upc.init_tt()
 
-    # upc.sendCommand("tt.shuttle.tt_um_kianV_rv32ima_uLinux_SoC.enable()")
-    upc.sendCommand("select_design(910, 0)")
+    # Selet the  KianV RISC-V SOC project:
+    # Command from commander app:
+    # upc.sendCommand("select_design(910, 0)")
+    # same thing, nicer looking:
+    upc.sendCommand("tt.shuttle.tt_um_kianV_rv32ima_uLinux_SoC.enable()")
 
+    # set clock to 30 MHz
     upc.sendCommand("set_clock_hz(30000000, max_rp2040_freq=200_000_000)")
 
-    upc.write(b"\x03")
+    # Press reset button
     upc.btn_reset()
 
-    # upc.send_file('little_term.py')
+    # route the rp2040's tx/rx to SoC tx/rx
     upc.write(b"\x02")
     upc.write(b"\x05")
-    ttCpy = open("little_term.py").read()
-    upc.write(ttCpy.encode())
+    upc.send_file("little_term.py")
     upc.write(b"\x04")
 
 
