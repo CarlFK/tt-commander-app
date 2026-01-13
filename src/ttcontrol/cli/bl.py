@@ -12,7 +12,7 @@ class uPy_com:
     TT-MicroPython commander
     """
 
-    def __init__(self, serial_port, throttle, debug):
+    def __init__(self, serial_port, throttle, debug=False):
         self.debug = debug
         self.throttle = throttle
         self.serial = serial.Serial(serial_port, timeout=0.1)
@@ -51,13 +51,6 @@ class uPy_com:
           // Send Ctrl+C twice to stop any running program,
           // followed by Ctrl+B to exit RAW REPL mode (if it was entered),
           // and finally Ctrl+D to soft reset the board.
-          await this.writer.write('\x03\x03\x02');
-          await this.writer.write('\x04');
-        }
-        await this.writer.write('\x01'); // Send Ctrl+A to enter RAW REPL mode.
-        await this.writer.write(ttControl + '\x04'); // Send the ttcontrol.py script and execute it.
-        await this.sendCommand('read_rom()');
-        await this.syncState();
         """
         self.write(b"\x03\x03\x02")
         self.write(b"\x04")
@@ -92,16 +85,19 @@ def get_args():
 
     return args
 
-
-def main():
-
-    args = get_args()
+def init_tt(serial_port, throttle, debug=False):
 
     # open serial connection from host to RP2040
-    upc = uPy_com(args.serial_port, args.throttle, args.debug)
+    # upc: Micro Python Commmander - TT-MicroPython commander
+    upc = uPy_com(serial_port, throttle, debug)
 
     # Init the TT board
     upc.init_tt()
+
+    return upc
+
+
+def KianV_RISCV(upc):
 
     # Selet the  KianV RISC-V SOC project:
     # Command from commander app:
@@ -112,7 +108,7 @@ def main():
     # set clock to 30 MHz
     upc.sendCommand("set_clock_hz(30000000, max_rp2040_freq=200_000_000)")
 
-    # Press reset button
+    # trigger reset button
     upc.btn_reset()
 
     # route the rp2040's tx/rx to SoC tx/rx
@@ -120,6 +116,17 @@ def main():
     upc.write(b"\x05")
     upc.send_file("little_term.py")
     upc.write(b"\x04")
+
+
+
+def main():
+
+    args = get_args()
+
+    upc = init_tt(args.serial_port, args.throttle, args.debug)
+
+    # KianV RISC-V
+    KianV_RISCV(upc)
 
 
 if __name__ == "__main__":
