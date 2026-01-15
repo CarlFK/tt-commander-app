@@ -1,0 +1,8 @@
+sudo pip install mpremote --break-system-packages
+mpremote fs cp little_term.py :
+
+pi@pi21:~/tt-commander-app/src/ttcontrol/cli $ mpremote run little_term.py
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+NameError: name 'tt' isn't defined
+
