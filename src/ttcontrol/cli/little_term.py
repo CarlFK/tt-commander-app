@@ -3,7 +3,6 @@ from machine import UART
 
 def little_term( tt, window_time=400*1000000):
 
-
     # don't halt on ^c (or any other char)
     micropython.kbd_intr(-1)
 
@@ -30,6 +29,8 @@ def little_term( tt, window_time=400*1000000):
                             if last_char is not None and \
                                last_char == b and \
                                utime.time_ns()-last_time < window_time:
+                                   print("little_term exit.")
+                                   print("import little_term; little_term.little_term(tt, window_time=400*1000000)")
                                    raise KeyboardInterrupt
 
                         last_char,last_time = b,utime.time_ns()
