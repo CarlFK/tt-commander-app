@@ -55,7 +55,7 @@ class uPy_com:
         self.write(b"\x03\x03\x02")
         self.write(b"\x04")
 
-        self.write(b"\x01")
+        self.write(b"\x01") # // Send Ctrl+A to enter RAW REPL mode.
         self.send_file("../ttcontrol.py")
         self.write(b"\x04")
         sleep(8)
